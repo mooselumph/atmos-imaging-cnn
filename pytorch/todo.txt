@@ -1,0 +1,8 @@
+TODO
+-Refactor Dataset code. Allow for selection of a forward model, which takes in numpy arrays and outputs numpy arrays, and can be used for both training and testing.
+-Run isoplanatic.py code on anaconda and make sure that results are as expected
+-Try moving the loss calculation to the GPU to see if it affects run time
+-Update test.py
+-Create new repository (https://stackoverflow.com/questions/38831301/how-to-un-fork-the-github-repository)
+
+LOG
