@@ -7,12 +7,7 @@ import numpy as np
 from torch.utils.data import Dataset
 import torch
 from forward_models.isoplanatic import apply_aberration as apply_isoplanatic
-
-# TODO: Make these inputs arguments to gen_data function
-patch_size, stride = 40, 10
-aug_times = 1
-scales = [1, 0.9, 0.8, 0.7]
-batch_size = 128
+from profiles import DefaultProfile
 
 class GenericDataset(Dataset):
     
@@ -52,32 +47,32 @@ def aug_img(img, mode=0):
         return np.flipud(np.rot90(img, k=3))
 
 
-def gen_patches(file_name):
+def gen_patches(file_name,p=DefaultProfile()):
     # get multiscale patches from a single image
     img = cv2.imread(file_name, 0)  # gray scale
     h, w = img.shape
     patches = []
-    for s in scales:
+    for s in p.scales:
         h_scaled, w_scaled = int(h*s), int(w*s)
         img_scaled = cv2.resize(img, (h_scaled, w_scaled), interpolation=cv2.INTER_CUBIC)
         # extract patches
-        for i in range(0, h_scaled-patch_size+1, stride):
-            for j in range(0, w_scaled-patch_size+1, stride):
-                x = img_scaled[i:i+patch_size, j:j+patch_size]
-                for k in range(0, aug_times):
+        for i in range(0, h_scaled-p.patch_size+1, p.stride):
+            for j in range(0, w_scaled-p.patch_size+1, p.stride):
+                x = img_scaled[i:i+p.patch_size, j:j+p.patch_size]
+                for k in range(0, p.aug_times):
                     x_aug = aug_img(x, mode=np.random.randint(0, 8))
                     patches.append(x_aug)
     return patches
 
 
-def gen_data(data_dir='data/Train/Train400', verbose=False):
+def gen_data(p=DefaultProfile(), verbose=False):
     # generate clean patches from a dataset
-    file_list = glob.glob(data_dir+'/*.png')  # get name list of all .png files
-    # initrialize
+    file_list = glob.glob(p.train_data+'/*.png')  # get name list of all .png files
+    # initialize
     data = []
     # generate patches
     for i in range(len(file_list)):
-        patches = gen_patches(file_list[i])
+        patches = gen_patches(file_list[i],p)
         for patch in patches:    
             data.append(patch)
         if verbose:
@@ -85,7 +80,7 @@ def gen_data(data_dir='data/Train/Train400', verbose=False):
 
     data = np.array(data, dtype='uint8')
     data = np.expand_dims(data, axis=3)
-    discard_n = len(data)-len(data)//batch_size*batch_size  # because of batch normalization
+    discard_n = len(data)-len(data)//p.batch_size*p.batch_size  # because of batch normalization
     data = np.delete(data, range(discard_n), axis=0)
 
     # TODO: Determine redundancy with the above ^^
@@ -108,7 +103,7 @@ def load_data(data_dir='data/Test/Set68'):
 
 if __name__ == '__main__': 
 
-    data = gen_data(data_dir='data/Train400')
+    data = gen_data()
 
 
 #    print('Shape of result = ' + str(res.shape))

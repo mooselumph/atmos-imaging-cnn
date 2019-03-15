@@ -1,2 +1,6 @@
 pytorch/data/Train/
 pytorch/results/
+*.ini
+*.pth
+*.png
+*.pyc

@@ -1,12 +1,18 @@
 import torch.nn as nn
 import torch.nn.init as init
 
-def get_model(name='DnCNN'):
-    return DnCNN
-
 class DnCNN(nn.Module):
-    def __init__(self, depth=17, n_channels=64, image_channels=1, use_bnorm=True, kernel_size=3):
+
+    @staticmethod
+    def validate_args(residual_learn):
+        d = dict()
+        d['residual_learn'] = (residual_learn == True or residual_learn == 'True' or residual_learn == 1)
+        return d
+
+    def __init__(self, depth=17, n_channels=64, image_channels=1, use_bnorm=True, kernel_size=3, residual_learn=True):
         super(DnCNN, self).__init__()
+        self.residual_learn = residual_learn
+
         kernel_size = 3
         padding = 1
         layers = []
@@ -22,9 +28,10 @@ class DnCNN(nn.Module):
         self._initialize_weights()
 
     def forward(self, x):
-        y = x
         out = self.dncnn(x)
-        return y-out
+        if self.residual_learn:
+            out = x - out
+        return out
 
     def _initialize_weights(self):
         for m in self.modules():
